@@ -57,15 +57,15 @@ def train():
 
         model.train()
         total_loss = 0.0
-        correct    = 0
-        total      = 0
+        correct = 0
+        total = 0
 
         for input_ids, attention_mask, labels in loader:
 
             # sposta i tensori sul dispositivo corretto
-            input_ids      = input_ids.to(device)
+            input_ids = input_ids.to(device)
             attention_mask = attention_mask.to(device)
-            labels         = labels.to(device)
+            labels = labels.to(device)
 
             # TODO ──────────────────────────────────────────────────
             # Scrivi i 5 passi del training loop:
@@ -90,13 +90,15 @@ def train():
             # Metriche — non modificare
             # ----------------------------------------------------------
             total_loss += loss.item()
-            preds       = logits.argmax(dim=-1)
-            correct    += (preds == labels).sum().item()
-            total      += labels.size(0)
+            preds = logits.argmax(dim=-1)
+            correct += (preds == labels).sum().item()
+            total += labels.size(0)
 
         avg_loss = total_loss / len(loader)
         accuracy = correct / total * 100
-        print(f"Epoca {epoch+1:>3}/{num_epochs} | loss {avg_loss:.4f} | accuracy {accuracy:.1f}%")
+        print(
+            f"Epoca {epoch+1:>3}/{num_epochs} | loss {avg_loss:.4f} | accuracy {accuracy:.1f}%"
+        )
 
     print("\nTraining completato.")
     torch.save(model.state_dict(), "checkpoints/encoder_classifier.pt")

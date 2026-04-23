@@ -8,6 +8,7 @@ import torch.nn as nn
 # Positional Encoding
 # ------------------------------------------------------------------
 
+
 class PositionalEncoding(nn.Module):
     """
     Aggiunge informazione di posizione agli embedding.
@@ -39,19 +40,20 @@ class PositionalEncoding(nn.Module):
         # aggiunge dimensione batch: [1, max_len, d_model]
         # register_buffer: non è un parametro allenabile ma viene
         # spostato su GPU insieme al modello con .to(device)
-        self.register_buffer('pe', pe.unsqueeze(0))
+        self.register_buffer("pe", pe.unsqueeze(0))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # x shape: [batch, seq_len, d_model]
         # pe shape: [1, max_len, d_model]
         # somma solo le prime seq_len posizioni
-        x = x + self.pe[:, :x.size(1)]
+        x = x + self.pe[:, : x.size(1)]
         return self.dropout(x)
 
 
 # ------------------------------------------------------------------
 # Encoder-only Transformer
 # ------------------------------------------------------------------
+
 
 class EncoderClassifier(nn.Module):
     """
@@ -97,9 +99,9 @@ class EncoderClassifier(nn.Module):
 
     def forward(
         self,
-        input_ids: torch.Tensor,        # [batch, seq_len]
-        attention_mask: torch.Tensor,   # [batch, seq_len]  1=reale 0=pad
-    ) -> torch.Tensor:                  # [batch, num_classes]
+        input_ids: torch.Tensor,  # [batch, seq_len]
+        attention_mask: torch.Tensor,  # [batch, seq_len]  1=reale 0=pad
+    ) -> torch.Tensor:  # [batch, num_classes]
 
         # TODO 2 ──────────────────────────────────────────────────
         # Scrivi il forward pass in 4 passi:
@@ -148,7 +150,7 @@ if __name__ == "__main__":
 
     # forward pass con dati fittizi
     batch_size, seq_len = 4, 16
-    input_ids      = torch.randint(0, 100, (batch_size, seq_len))
+    input_ids = torch.randint(0, 100, (batch_size, seq_len))
     attention_mask = torch.ones(batch_size, seq_len, dtype=torch.long)
 
     logits = model(input_ids, attention_mask)
