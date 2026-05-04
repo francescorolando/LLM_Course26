@@ -3,13 +3,17 @@
 import os
 from datetime import datetime
 
+# -----paths-------------------------------------------------------------
+# Percorso base della cartella distillbert_sst2_complete
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # -----model-------------------------------------------------------------
 MODEL = "distilbert-base-uncased"
 NUM_LABELS = 2
 
 # -----dataset----------------------------------------------------------
 DATASET = "glue"
-DATASET_CONFIG = "sst2"   
+DATASET_CONFIG = "sst2"
 MAX_LENGTH = 32
 
 # -----training---------------------------------------------------------
@@ -23,15 +27,22 @@ SAVE_STRATEGY = "epoch"  # o "steps"
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 OUTPUT_DIR = os.path.join(
+    BASE_DIR,
     "checkpoints",
-    f"{MODEL}_lr{LEARNING_RATE}_bs{TRAIN_BATCH_SIZE}_ep{EPOCHS}_{timestamp}"
+    f"{MODEL}_lr{LEARNING_RATE}_bs{TRAIN_BATCH_SIZE}_ep{EPOCHS}_{timestamp}",
+)
+
+LOGS_DIR = os.path.join(
+    BASE_DIR,
+    "logs",
+    f"{MODEL}_lr{LEARNING_RATE}_bs{TRAIN_BATCH_SIZE}_ep{EPOCHS}_{timestamp}",
 )
 
 
 # -----evaluation-------------------------------------------------------
 EVAL_STRATEGY = "epoch"  # o "steps"
-EVAL_STEPS = 100         # se EVAL_STRATEGY="steps", ogni quanti step valutare
-LOGGING_STEPS = 10       # ogni quanti step loggare metriche (loss, acc, ecc.)
+EVAL_STEPS = 100  # se EVAL_STRATEGY="steps", ogni quanti step valutare
+LOGGING_STEPS = 10  # ogni quanti step loggare metriche (loss, acc, ecc.)
 
 # -----reproducibility------------------------------------------------------
 SEED = 42

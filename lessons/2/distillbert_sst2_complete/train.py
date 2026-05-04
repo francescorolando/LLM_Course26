@@ -5,7 +5,8 @@
 
 import os
 import sys
-from config import OUTPUT_DIR, SEED
+import logging
+from config import OUTPUT_DIR, LOGS_DIR, SEED
 from data.dataset import load_data
 from model.model import load_model
 from training.metrics import compute_metrics
@@ -44,11 +45,29 @@ def main():
     set_seed(SEED)
     print(f"Seed: {SEED}")
 
+    # -- 0.5. crea cartella e file di log ---------------------------
+    os.makedirs(LOGS_DIR, exist_ok=True)
+    log_file = os.path.join(LOGS_DIR, "training.log")
+
+    # configura il logger
+    logging.basicConfig(
+        filename=log_file,
+        level=logging.INFO,
+        format="%(asctime)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    logger = logging.getLogger(__name__)
+    logger.info(f"Inizio training - Seed: {SEED}")
+    print(f"Log file: {log_file}")
+
     # -- 1. dati --------------------------------------------------
     print("\n--- Caricamento dataset ---")
     tokenized_dataset, tokenizer = load_data()
     print(f"Train:      {len(tokenized_dataset['train'])} esempi")
     print(f"Validation: {len(tokenized_dataset['validation'])} esempi")
+    logger.info(
+        f"Dataset caricato - Train: {len(tokenized_dataset['train'])}, Val: {len(tokenized_dataset['validation'])}"
+    )
 
     # -- 2. modello -----------------------------------------------
     print("\n--- Caricamento modello ---")
@@ -65,7 +84,9 @@ def main():
 
     # -- 4. training ----------------------------------------------
     print("\n--- Avvio training ---")
+    logger.info("Inizio training")
     trainer.train()
+    logger.info("Training completato")
     # il Trainer stampa automaticamente:
     # - la loss ad ogni LOGGING_STEPS step
     # - le metriche di valutazione alla fine di ogni epoca
@@ -75,14 +96,13 @@ def main():
     print("\n--- Valutazione finale ---")
     risultati = trainer.evaluate()
     print(f"Accuracy finale: {risultati['eval_accuracy']:.4f}")
+    logger.info(f"Accuracy finale: {risultati['eval_accuracy']:.4f}")
 
     # -- 6. salva il modello finale -------------------------------
     print(f"\n--- Salvataggio modello ---")
     trainer.save_model(OUTPUT_DIR)
     tokenizer.save_pretrained(OUTPUT_DIR)
-    # salviamo anche il tokenizer insieme al modello —
-    # serve per caricare il modello in predict.py senza
-    # dover sapere quale tokenizer era stato usato
+    logger.info(f"Modello salvato in: {OUTPUT_DIR}")
     print(f"Modello salvato in: {OUTPUT_DIR}")
 
 
