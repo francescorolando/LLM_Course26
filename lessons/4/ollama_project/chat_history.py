@@ -7,6 +7,7 @@
 import ollama
 import sys
 import os
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from config import MODEL
@@ -36,14 +37,13 @@ print("  1. SENZA MEMORIA — ogni chiamata è indipendente")
 print("=" * 50)
 
 r1 = ollama.chat(
-    model=MODEL,
-    messages=[{"role": "user", "content": "Il mio nome è Giulia."}]
+    model=MODEL, messages=[{"role": "user", "content": "Il mio nome è Giulia."}]
 )
 print(f"Turno 1: {r1['message']['content']}")
 
 r2 = ollama.chat(
     model=MODEL,
-    messages=[{"role": "user", "content": "Come mi chiamo?"}]
+    messages=[{"role": "user", "content": "Come mi chiamo?"}],
     # nota: non passiamo il messaggio precedente
     # il modello non sa chi sei
 )
@@ -61,6 +61,7 @@ print("=" * 50)
 
 history = []
 
+
 def chat(user_message: str) -> str:
     """
     Invia un messaggio mantenendo la storia della conversazione.
@@ -75,6 +76,7 @@ def chat(user_message: str) -> str:
     history.append({"role": "assistant", "content": risposta})
 
     return risposta
+
 
 r1 = chat("Il mio nome è Giulia.")
 print(f"Turno 1 — utente: 'Il mio nome è Giulia.'")
@@ -131,6 +133,49 @@ print("=" * 50 + "\n")
 #
 #     print("Assistente: ", end="", flush=True)
 #     ...
+# ─────────────────────────────────────────────────────────────────────
 
+# 1. Inizializza la history con un system prompt
+system_prompt = (
+    "Sei un assistente esperto di machine learning e LLM. "
+    "Rispondi sempre in italiano, in modo chiaro e conciso. "
+    "Se l'utente ti chiede qualcosa fuori dal tuo ambito, "
+    "suggerisci gentilmente di riportare la conversazione "
+    "su argomenti di machine learning."
+)
+history = [{"role": "system", "content": system_prompt}]
 
+# 2. Implementa il loop while True con gestione comandi
+while True:
+    # - leggi l'input dell'utente con input()
+    user_input = input("Tu: ").strip()
 
+    # - gestisci "exit" per uscire
+    if user_input.lower() == "exit":
+        print("Arrivederci!")
+        break
+
+    # - gestisci "reset" per svuotare la history (ma mantieni il system prompt!)
+    if user_input.lower() == "reset":
+        history = [{"role": "system", "content": system_prompt}]
+        print("Conversazione resettata.\n")
+        continue
+
+    # Ignora input vuoto
+    if not user_input:
+        continue
+
+    # - chiama ollama.chat() con la history aggiornata
+    history.append({"role": "user", "content": user_input})
+
+    # - stampa la risposta con streaming (stream=True)
+    print("Assistente: ", end="", flush=True)
+    response_text = ""
+    for chunk in ollama.chat(model=MODEL, messages=history, stream=True):
+        content = chunk["message"]["content"]
+        print(content, end="", flush=True)
+        response_text += content
+    print()  # newline dopo la risposta
+
+    # Aggiungi la risposta completa alla history
+    history.append({"role": "assistant", "content": response_text})

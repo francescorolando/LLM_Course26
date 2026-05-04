@@ -1,1 +1,2 @@
-MODEL = "gemma2:2b"
+# MODEL = "gemma2:2b"
+MODEL = "mistral:latest"

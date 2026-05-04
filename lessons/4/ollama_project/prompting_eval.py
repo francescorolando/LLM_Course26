@@ -16,14 +16,17 @@ N = 5  # quante domande testare: aumenta per risultati più stabili
 # Funzioni di prompting
 # ------------------------------------------------------------------
 
+
 def zero_shot(question: str) -> str:
     """Nessun esempio, solo la domanda."""
     response = ollama.chat(
         model=MODEL,
-        messages=[{
-            "role": "user",
-            "content": f"Answer this question with a single word or short phrase:\n{question}"
-        }]
+        messages=[
+            {
+                "role": "user",
+                "content": f"Answer this question with a single word or short phrase:\n{question}",
+            }
+        ],
     )
     return response["message"]["content"].strip()
 
@@ -32,9 +35,10 @@ def few_shot(question: str) -> str:
     """Tre esempi prima della domanda reale."""
     response = ollama.chat(
         model=MODEL,
-        messages=[{
-            "role": "user",
-            "content": f"""Answer each question with a single word or short phrase.
+        messages=[
+            {
+                "role": "user",
+                "content": f"""Answer each question with a single word or short phrase.
 
 Q: What is the capital of Italy?
 A: Rome
@@ -46,8 +50,9 @@ Q: What is the chemical symbol for gold?
 A: Au
 
 Q: {question}
-A:"""
-        }]
+A:""",
+            }
+        ],
     )
     return response["message"]["content"].strip()
 
@@ -56,14 +61,16 @@ def chain_of_thought(question: str) -> str:
     """Chiede al modello di ragionare prima di rispondere."""
     response = ollama.chat(
         model=MODEL,
-        messages=[{
-            "role": "user",
-            "content": f"""Answer the question step by step.
+        messages=[
+            {
+                "role": "user",
+                "content": f"""Answer the question step by step.
 You MUST end your response with this exact format on a new line:
 FINAL ANSWER: <your answer>
 
-Question: {question}"""
-        }]
+Question: {question}""",
+            }
+        ],
     )
     return response["message"]["content"].strip()
 
@@ -71,6 +78,7 @@ Question: {question}"""
 # ------------------------------------------------------------------
 # Funzione di valutazione
 # ------------------------------------------------------------------
+
 
 def extract_answer(response: str, strategy: str) -> str:
     """
@@ -80,16 +88,16 @@ def extract_answer(response: str, strategy: str) -> str:
     """
     if strategy == "chainofthought":
         # cerca FINAL ANSWER: ovunque — gestisce <risposta> e testo libero
-        match = re.search(r'FINAL ANSWER[:\s]+(.+?)(?:\n|$)', response, re.IGNORECASE)
+        match = re.search(r"FINAL ANSWER[:\s]+(.+?)(?:\n|$)", response, re.IGNORECASE)
         if match:
             return match.group(1).strip()
 
         # fallback — prende l'ultima riga non vuota
         # re.split gestisce sia \n reali che \\n letterali
-        lines = [l.strip() for l in re.split(r'\n|\\n', response) if l.strip()]
+        lines = [l.strip() for l in re.split(r"\n|\\n", response) if l.strip()]
         return lines[-1] if lines else response
 
-    return re.split(r'\n|\\n', response)[0].strip()
+    return re.split(r"\n|\\n", response)[0].strip()
 
 
 def is_correct(prediction: str, ground_truth: str) -> bool:
@@ -98,7 +106,7 @@ def is_correct(prediction: str, ground_truth: str) -> bool:
     Confronto case-insensitive e verifica se la risposta
     contiene la risposta corretta (o viceversa).
     """
-    pred  = prediction.lower().strip()
+    pred = prediction.lower().strip()
     truth = ground_truth.lower().strip()
     return truth in pred or pred in truth
 
@@ -115,12 +123,11 @@ def evaluate(strategy_fn: callable, strategy_name: str, dataset: list, n: int):
     correct = 0
     for i, example in enumerate(dataset[:n]):
         question = example["question"]
-        truth    = example["answer"]
+        truth = example["answer"]
 
-        response  = strategy_fn(question)
+        response = strategy_fn(question)
         predicted = extract_answer(
-            response,
-            strategy_name.lower().replace("-", "").replace(" ", "")
+            response, strategy_name.lower().replace("-", "").replace(" ", "")
         )
         ok = is_correct(predicted, truth)
 
@@ -146,9 +153,9 @@ if __name__ == "__main__":
     print(f"Modello: {MODEL}")
     print(f"Domande: {N}")
 
-    acc_zero = evaluate(zero_shot,        "Zero-shot",        QA_DATASET, N)
-    acc_few  = evaluate(few_shot,         "Few-shot",         QA_DATASET, N)
-    acc_cot  = evaluate(chain_of_thought, "Chain-of-thought", QA_DATASET, N)
+    acc_zero = evaluate(zero_shot, "Zero-shot", QA_DATASET, N)
+    acc_few = evaluate(few_shot, "Few-shot", QA_DATASET, N)
+    acc_cot = evaluate(chain_of_thought, "Chain-of-thought", QA_DATASET, N)
 
     # -- riepilogo ─────────────────────────────────────────────────
     print("\n" + "=" * 50)
@@ -161,6 +168,6 @@ if __name__ == "__main__":
 
     best = max(
         [("Zero-shot", acc_zero), ("Few-shot", acc_few), ("CoT", acc_cot)],
-        key=lambda x: x[1]
+        key=lambda x: x[1],
     )
     print(f"  Strategia migliore: {best[0]} ({best[1]:.1f}%)")
